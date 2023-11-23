@@ -30,7 +30,7 @@
                             % baudrate and a buffered acquisition mode to
                             % handle the higher data flow of HD-EMG.                            
 
-% 20xx-xx-xx / Author  / Comment
+% 2018-01-18 / Eva Lendaro  / added BP_ExG_MR for Mannheim group
 
 
 
@@ -82,15 +82,31 @@ function obj = ConnectDevice(handles)
             obj = serial (ComPortName, 'baudrate', 1500000, 'databits', 8, 'byteorder', 'bigEndian');
             obj.InputBufferSize = sTall*sF*nCh*2;
         end
-    end     
-
-    % Open the connection
-    fopen(obj);
-
-    % Read available data and discard it
-    if obj.BytesAvailable > 1
-        fread(obj,obj.BytesAvailable,'uint8');       
-    end    
-%     disp(obj);
+    end  
+    
+    %%%%% BP_ExG_MR %%%%%
+    if strcmp(deviceName, 'BP_ExG_MR')
+        recorderip = '127.0.0.1';
+        %obj = tcpip(recorderip, 51244, 'NetworkRole', 'client'); % not really needed but otherwise it will probably crash
+        obj = pnet('tcpconnect', recorderip, 51244);
+        stat = pnet(obj,'status');
+        if stat > 0
+           % disp('connection established'); %just for debug, check if you
+            %get here in this row of code
+            %handles.pnet = pnet;
+            
+        end
+    end
+    if strcmp(deviceName, 'BP_ExG_MR')==0
+        % Open the connection
+        fopen(obj);
+        %make and if to avoid if it is the brain product thing
+        % Read available data and discard it 
+        
+        if obj.BytesAvailable > 1
+            fread(obj,obj.BytesAvailable,'uint8');       
+        end
+        disp(obj);
+    end
     
 end

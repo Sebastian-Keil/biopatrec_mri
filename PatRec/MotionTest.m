@@ -39,9 +39,7 @@
 %                                 details read RecordingSession.m log.
 % 2016-05-03 / Julian Maier     / Artifact inseration added to tempdata if
 %                                 required
-% 2018-02-23/ James Austin      / Added window overlap as the cycletime for real time
-%                                 pattern recognition implementation from
-%                                 NI devices (replacing tWs for PEEK time).                          
+                            
 % 20xx-xx-xx / Author     / Comment on update
 
 
@@ -86,6 +84,7 @@ global m;
 %% Init variable
 patRec  = patRecX;
 handles = handlesX;
+pDiv    = 4;        % Peeking devider
 trials  = str2double(get(handles.et_trials,'String'));
 nR      = str2double(get(handles.et_nR,'String'));
 timeOut = str2double(get(handles.et_timeOut,'String'));
@@ -148,9 +147,7 @@ deviceName          = patRec.dev;
 sT = motionTest.timeOut;
 tW = patRec.tW;                                                           % Time window size
 tWs = tW*sF;                                                              % Time window samples
-iW = patRec.wOverlap;                                                               % Increment window size
-oW = tW-iW;                                                     % Timestep length from window overlap
-iWs = floor(iW*sF);                                                              % Increment window samples
+
 
 %% Motion Test
 % Note: Probabily this way of testing only works for the NI
@@ -236,18 +233,19 @@ for t = 1 : trials
             end
             
             
-            cData = zeros(iWs,nCh);
+            cData = zeros(tWs,nCh);
             if strcmp (ComPortType, 'NI')
 
                 % Init SBI
                 sCh = 1:nCh;
+%                 s = InitSBI_NI(sF,sT,sCh);
                 if strcmp(deviceName, 'Thalmic MyoBand')
                     %CK: init MyoBand
                     s = MyoBandSession(sF, sT, sCh);
                 else
                     s = InitSBI_NI(sF,sT,sCh);
                 end
-                s.NotifyWhenDataAvailableExceeds = iWs;                            % PEEK time
+                s.NotifyWhenDataAvailableExceeds = tWs;                            % PEEK time
                 lh = s.addlistener('DataAvailable', @MotionTest_OneShot);
 
                 % Ask the user to execute movement
@@ -293,8 +291,9 @@ for t = 1 : trials
                 set(handles.t_msg,'String',mov);
                 drawnow;
                 
-                for timeWindowNr = 1:(sT-oW)/iW
-                    cData = Acquire_tWs(deviceName, obj, nCh, iWs);      % Acquire a new time window of samples
+                for timeWindowNr = 1:sT/tW
+
+                    cData = Acquire_tWs(deviceName, obj, nCh, tWs);            % acquire a new time window of samples
                     acquireEvent.Data = cData;
                     MotionTest_OneShot(0, acquireEvent);                       
                 end

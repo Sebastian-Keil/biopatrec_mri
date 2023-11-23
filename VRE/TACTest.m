@@ -57,9 +57,6 @@
 %                                 of distance (D) and allowance (A).
 %                                 Distance and allowance inputs can also
 %                                 now be vectors.
-% 2018-02-23/ James Austin      / Added window overlap as the cycletime for real time
-%                                 pattern recognition implementation from
-%                                 NI devices (replacing tWs for PEEK time).                                
 % 2018-08-01 / Andreas Eiler        Adapted code to new function 'count' by
 %                                   replacing variable count by count_rep
 % 20xx-xx-xx / Author     / Comment on update                          
@@ -124,11 +121,10 @@ function success = TACTest(patRecX, handlesX)
     % Get sampling time
     sT = tacTest.timeOut;
     tW = patRec.tW;                                                            % Time window size
+    iW = patRec.wOverlap;                                           % Increment window size
+    pDiv    = tW/iW;                                     % Peeking devider
     tWs = tW*sF;                                                           % Time window samples
-    iW = patRec.wOverlap;
-    iWs = floor(iW*sF);
-    oW = tW-iW;                                                  % Timestep length from window overlap
-    oWs = oW*sF;                                                           % Overlap samples
+    iWs = iW*sF;
     
     % Is threshold (thOut) used?
     if(isfield(patRec.patRecTrained,'thOut'))
@@ -192,8 +188,8 @@ function success = TACTest(patRecX, handlesX)
         A = A(rp);
             
         for r = 1 : reps
-            set(handles.txt_status,'String',sprintf('Trial: %d , Rep: %d.',t,r));
-
+            
+            
             %Loop through all of the movements
             for i = 1 : size(indexOrder,1)
                 completionTime = NaN;
@@ -300,20 +296,21 @@ function success = TACTest(patRecX, handlesX)
                 % Reset the controller between trials
                 patRec = ReInitControl(patRec);
 
-                cData = zeros(iWs,nCh);
+                cData = zeros(tWs,nCh);
                 if strcmp (ComPortType, 'NI')
 
                     % Init SBI
                     sCh = 1:nCh;
+%                     s = InitSBI_NI(sF,sT,sCh);
                     if strcmp(deviceName, 'Thalmic MyoBand')
                         %CK: init MyoBand
                         s = MyoBandSession(sF, sT, sCh);
                     else
                         s = InitSBI_NI(sF,sT,sCh);
                     end
-                    s.NotifyWhenDataAvailableExceeds = iWs;                            % PEEK time
+                    s.NotifyWhenDataAvailableExceeds = tWs;                            % PEEK time
                     lh = s.addlistener('DataAvailable', @TACTest_OneShot);
-
+                    
                     % Start DAQ
                     s.startBackground();                                               % Run in the backgroud
 
@@ -331,7 +328,7 @@ function success = TACTest(patRecX, handlesX)
                     
                     %%%%% Real Time PatRec with other custom device %%%%%
                 else
-
+                    
                     % Prepare handles for next function calls
                     handles.deviceName  = deviceName;
                     handles.ComPortType = ComPortType;
@@ -347,13 +344,25 @@ function success = TACTest(patRecX, handlesX)
                     % Connect the chosen device, it returns the connection object
                     obj = ConnectDevice(handles);
 
+	                  %%%%% Send trigger
+                        h = actxserver('WScript.Shell'); %Initializes server for GUI control
+                        h.AppActivate('recorder'); %Brings brainvision to focus
+                        h.SendKeys('1'); % Sends '1' keystroke
+						
                     % Set the selected device and Start the acquisition
                     SetDeviceStartAcquisition(handles, obj);
                     handles.CommObj = obj;
                     handles.success = 0;
                     
-                    for timeWindowNr = 1:(sT-oW)/iW
-                        cData = Acquire_tWs(deviceName, obj, nCh, iWs);            % acquire a new time window of samples
+                    for timeWindowNr = 1:sT/(tW/pDiv)
+%                     if timeWindowNr == 10
+%                         btwnpredtic = tic;
+%                     end
+%                     if timeWindowNr == 11
+%                         btwnpredtic = toc(btwnpredtic)
+%                     end
+
+                        cData = Acquire_tWs(deviceName, obj, nCh, tWs/pDiv);            % acquire a new time window of samples
                         acquireEvent.Data = cData;
                         TACTest_OneShot(0, acquireEvent);   
                         if handles.success
@@ -364,6 +373,11 @@ function success = TACTest(patRecX, handlesX)
                     end
                         % Stop acquisition
                         StopAcquisition(deviceName, obj);
+						
+						% STOP TRIGGER
+                        h = actxserver('WScript.Shell');
+                        h.AppActivate('recorder'); %Brings brainvision to focus
+                        h.SendKeys('3'); % Sends 3 keystroke
                 end
 
 
@@ -455,7 +469,7 @@ function TACTest_OneShot(src,event)
         tData = tempData(end-patRec.sF*patRec.tW+1:end,:);  %Copy the temporal data to the test data
         dataTW(:,:,nTW) = tData;                            % Save data for future analisys
 
-        %Start counting processing time
+        %Start count_reping processing time
         processingTimeTic = tic;
 
         % General routine for RealtimePatRec

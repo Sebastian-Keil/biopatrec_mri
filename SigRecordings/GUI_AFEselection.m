@@ -36,6 +36,8 @@
                               % the caller perform the recording.
 % 2018-02-24 / Adam Naber / Device name list is now set in this file,
                           % rather than being saved in the .fig. 
+% 2019-01-18 / Eva Lendaro / Added BP_ExG_MR device for Mannheim group
+                          
 
 function varargout = GUI_AFEselection(varargin)
 % GUI_AFESELECTION MATLAB code for GUI_AFEselection.fig
@@ -459,12 +461,18 @@ function pm_name_Callback(hObject, eventdata, handles)
 %        str2double(get(hObject,'String')) returns contents of pm_name as a double
 contents = cellstr(get(handles.pm_name,'String'));
 deviceName = contents{get(handles.pm_name,'Value')};
+if strcmp(deviceName, 'Thalmic MyoBand')
 %CK: These are the default values for the MyoBand. Changing these might
 %lead to unwanted behaviour.
-if strcmp(deviceName, 'Thalmic MyoBand')
     set(handles.pm_sampleRate, 'Value', 9); %CK: The sample rate should be 200 Hz
     set(handles.ComPortType, 'Value', 1); %CK: I chose the NI ComPort because later in BPR it was easier to implement the MyoBand as an NI device, eventhough it isn't!
     set(handles.et_chs, 'String', '8');
+end
+if strcmp(deviceName, 'BP_ExG_MR')
+    %Default values set in recorder software by Brain Products.
+    set(handles.pm_sampleRate, 'Value', 10); %1000 Hz
+    set(handles.ComPortType, 'Value', 3); % COM
+    set(handles.et_chs, 'String', '8'); %it has max 8 bipolar channels
 end
 guidata(hObject,handles);
 
@@ -479,7 +487,7 @@ function pm_name_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-deviceNames = {'AD2','AD3','MyoAmpF4F1','MyoAmpF4F2','MyoAmpF4F7','MyoAmpF4F7_Shielded','NeuroAmpF8F1','RHA2216','RHA2132','ADS1299','ADS_BP','Thalmic MyoBand'};
+deviceNames = {'AD2','AD3','MyoAmpF4F1','MyoAmpF4F2','MyoAmpF4F7','MyoAmpF4F7_Shielded','NeuroAmpF8F1','RHA2216','RHA2132','ADS1299','ADS_BP','Thalmic MyoBand','BP_ExG_MR'};
 set(hObject,'String',deviceNames);
 set(hObject,'Value',5);
 

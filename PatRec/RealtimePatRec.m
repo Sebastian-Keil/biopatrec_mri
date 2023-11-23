@@ -50,15 +50,8 @@
 %                                 other custom devices for BioPatRec_TRE.
 % 2016-02-10 / Max Ortiz        / change the initialization of the NI card
 %                                 to use the vector of channels rather than only the number
-% 2018-02-23/ James Austin      / Added window overlap as the cycletime for real time
-%                                 pattern recognition implementation from
-%                                 NI devices (replacing tWs for PEEK time). 
-%                               / Added currentDegPerMovLast array to induce program
-%                                 to send a new signal to the motors of an
-%                                 external device whenever either the movement class
-%                                 *or* the velocity changes (i.e. external
-%                                 devices will now work with velocity ramp
-%                                 or other velocity-variant control methods).
+% 2016-04-15 / Julian Maier     / Artificial artifact inseration (Line 268)   
+
 % 20xx-xx-xx / Author  / Comment on update
 
 function handlesX = RealtimePatRec(patRecX, handlesX)
@@ -77,7 +70,6 @@ function handlesX = RealtimePatRec(patRecX, handlesX)
     global pwmBs;
     global tempData;
     global outVectorMotorLast;
-    global currentDegPerMovLast;
     
     %global data;            % only needed for testing
     global thresholdGUIData;
@@ -88,8 +80,7 @@ function handlesX = RealtimePatRec(patRecX, handlesX)
     procT    = [];
     tempData = [];
     outVectorMotorLast = zeros(patRec.nOuts,1);
-    currentDegPerMovLast = zeros(patRec.nOuts,1);
-    
+                         
     % Get needed info from patRec structure
     sF                  = patRec.sF;
     nCh                 = length(patRec.nCh);       
@@ -100,10 +91,7 @@ function handlesX = RealtimePatRec(patRecX, handlesX)
     sT = str2double(get(handles.et_testingT,'String'));
     tW = patRec.tW;                                                        % Time window size
     tWs = tW*sF;                                                           % Time window samples
-    iW = patRec.wOverlap;
-    iWs = floor(iW*sF);
-    oW = tW-iW;                                                  % Timestep length from window overlap
-    oWs = oW*sF;                                                           % Overlap samples
+   
 
     % Initialze control algorithms
     %patRec = InitControl(patRec); % No longer needed, Initialization is done in GUI
@@ -167,7 +155,7 @@ function handlesX = RealtimePatRec(patRecX, handlesX)
         end        
     end
 
-    cData = zeros(iWs,nCh);
+    cData = zeros(tWs,nCh);
     
     %%%%% Real Time PatRec with NI DAQ card %%%%%
     if strcmp (ComPortType, 'NI')
@@ -180,7 +168,7 @@ function handlesX = RealtimePatRec(patRecX, handlesX)
         else
             s = InitSBI_NI(sF,sT,sCh); 
         end 
-        s.NotifyWhenDataAvailableExceeds = iWs;                            % PEEK time
+        s.NotifyWhenDataAvailableExceeds = tWs;                            % PEEK time
         lh = s.addlistener('DataAvailable', @RealtimePatRec_OneShot); 
 
         % Start DAQ
@@ -213,9 +201,11 @@ function handlesX = RealtimePatRec(patRecX, handlesX)
         handles.sTall       = sT;
 
         % Delete connection object
-        if isfield(handles,'obj')
-            delete(handles.obj);
+        if strcmp(deviceName, 'BP_ExG_MR')==0
+            if isfield(handles,'obj')
+            end
         end
+
 
         % Connect the chosen device, it returns the connection object
         obj = ConnectDevice(handles);
@@ -224,9 +214,9 @@ function handlesX = RealtimePatRec(patRecX, handlesX)
         % Set the selected device and Start the acquisition
         handles = SetDeviceStartAcquisition(handles, obj);
 
-        for timeWindowNr = 1:(sT-oW)/iW
+        for timeWindowNr = 1:sT/tW
 
-            cData = Acquire_tWs(deviceName, obj, nCh, iWs);            % acquire a new time window of samples
+            cData = Acquire_tWs(deviceName, obj, nCh, tWs);            % acquire a new time window of samples
             acquireEvent.Data = cData;
             RealtimePatRec_OneShot(0, acquireEvent);                       
         end
@@ -284,7 +274,6 @@ function RealtimePatRec_OneShot(src,event)
     global pwmBs;    
     global tempData;
     global outVectorMotorLast;
-    global currentDegPerMovLast; 
 	global thresholdGUIData;
 
     %Keep saving all recorded data
@@ -343,11 +332,6 @@ function RealtimePatRec_OneShot(src,event)
                 outVectorMotor(outMov) = 1;
                 % Check if the state has change
                 outChanged = find(xor(outVectorMotor, outVectorMotorLast));
-                % Check if the velocity has changed by finding non-zero
-                % differences between current velocity and previous
-                % velocity (currentDegPerMovLast)
-                speedChanged = find(transpose(patRec.control.currentDegPerMov) - currentDegPerMovLast);
-                outChanged = union(outChanged, speedChanged);
                 % Only send information to the motors that have changed state
                 for i = 1 : size(outChanged,1)
                     if outVectorMotor(outChanged(i))
@@ -398,7 +382,6 @@ function RealtimePatRec_OneShot(src,event)
         % Next cycle
         nTW = nTW + 1;
         outVectorMotorLast = outVectorMotor;
-        currentDegPerMovLast = transpose(patRec.control.currentDegPerMov);
         % Finish of processing time
         procT(nTW) = toc(procTimeS);
         

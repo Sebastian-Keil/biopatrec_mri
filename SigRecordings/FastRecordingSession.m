@@ -167,20 +167,24 @@ function [cdata, sF, sT] = FastRecordingSession(varargin)
 
         % Connect the chosen device, it returns the connection object
         obj = ConnectDevice(handles);
-        if strcmp(get(obj,'Status'),'closed')   % Make sure port opened correctly
-            return;
+        if strcmp(deviceName, 'BP_ExG_MR')==0
+            if strcmp(get(obj,'Status'),'closed')   % Make sure port opened correctly
+                return;
+            end
         end
+            
         
         % Set the selected device and Start the acquisition
         SetDeviceStartAcquisition(handles, obj);
-        if strcmp(get(obj,'Status'),'closed')   % StartAcquisition closes the port on failure
-            return;
+        if strcmp(deviceName, 'BP_ExG_MR')==0
+            if strcmp(get(obj,'Status'),'closed')   % Make sure port opened correctly
+                return;
+            end
         end
         
         samplesCounter = 1;  
 
-        samplesCounter = 1;
-        cData = zeros(tWs, nCh);  
+        cData = zeros(tWs, nCh);  %unsure about this
 
         for timeWindowNr = 1:sT/tW
             [cData, error] = Acquire_tWs(deviceName, obj, nCh, tWs);    % acquire a new time window of samples  

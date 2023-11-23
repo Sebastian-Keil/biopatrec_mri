@@ -28,7 +28,7 @@
                             % baudrate and a buffered acquisition mode to
                             % handle the higher data flow of HD-EMG.
 
-% 20xx-xx-xx / Author  / Comment
+% 2019-01-18 / Eva Lendaro  / added BP_ExG_MR for Mannheim group
 
 
 
@@ -60,4 +60,8 @@ function StopAcquisition(deviceName, obj)
         fclose(obj);                                                   % Close connection
     end
         
+        %%%%% BP_ExG_MR %%%%%
+    if strcmp(deviceName, 'BP_ExG_MR') 
+        % do nothing
+    end
 end

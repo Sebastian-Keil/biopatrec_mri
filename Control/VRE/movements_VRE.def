@@ -13,13 +13,13 @@
 12,Middle Flex,3,0,0 0
 13,Ring Extend,2,1,0 0
 14,Ring Flex,2,0,0 0
+20,Flex Elbow,15,1,0 0
+21,Extend Elbow,15,0,0 0
 15,Little Extend,1,1,0 0
 16,Little Flex,1,0,0 0
 17,Point,10,1,0 0
 18,Thumb Yaw Flex,6,1,0 0
 19,Thumb Yaw Extend,6,0,0 0
-20,Flex Elbow,15,1,0 0
-21,Extend Elbow,15,0,0 0
 22,Agree,11,1,0 0
 23,Fine Grip,12,1,0 0
 24,Side Grip,13,1,0 0
@@ -43,5 +43,5 @@
 18,Middle Flex,3,0,0 0
 19,Ring Extend,2,1,0 0
 20,Ring Flex,2,0,0 0
-21,Little Extend,1,1,0 0
-22,Little Flex,1,0,0 0
+31,Little Extend,1,1,0 0
+32,Little Flex,1,0,0 0

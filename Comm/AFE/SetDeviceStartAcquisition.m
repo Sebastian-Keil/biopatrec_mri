@@ -37,7 +37,7 @@
                             % baudrate and a buffered acquisition mode to
                             % handle the higher data flow of HD-EMG.
                             
-% 20xx-xx-xx / Author  / Comment
+%2018-01-18 / Eva Lendaro  / added BP_ExG_MR for Mannheim group
 
 
 
@@ -189,16 +189,10 @@ function handles = SetDeviceStartAcquisition(handles, obj)
             fclose(obj);
             return
         end
-        % Start recording
-        fwrite(obj,'G','char');
-        fwrite(obj,nCh,'char');
-        replay = char(fread(obj,1,'char'));
-        if strcmp(replay, 'G')
-            set(handles.t_msg,'String','Start');
-        else
-            set(handles.t_msg,'String','Error Start'); 
-            fclose(obj);
-            return
-        end
-    end         
+    end  
+        %%%%% BP_ExG_MR %%%%%
+    if strcmp(deviceName, 'BP_ExG_MR') 
+        % do nothing
+       % disp('made it here')
+    end
 end

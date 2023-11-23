@@ -35,7 +35,7 @@
                             % baudrate and a buffered acquisition mode to
                             % handle the higher data flow of HD-EMG.
                             
-% 20xx-xx-xx / Author  / Comment
+% 2019-01-18 / Eva Lendaro / Added BP_ExG_MR device for Mannheim group
 
 
 
@@ -108,6 +108,70 @@ function [cData, error] = Acquire_tWs(deviceName, obj, nCh, tWs)
             RequestSamplesRHA32(obj, tWs);
             cData = AcquireSamplesRHA32(obj, nCh, tWs);
        end
+       
+       %%%%% BP_ExG_MR %%%%%
+       if strcmp(deviceName, 'BP_ExG_MR') 
+           recorderip = '127.0.0.1';
+           obj = pnet('tcpconnect', recorderip, 51244);
+           stat = pnet(obj,'status');
+%            if stat > 0
+%                disp('connection established'); %just for debug, check if you
+%            end
+           header_size = 24;
+           finish = false;
+           while ~finish
+               try
+                   tryheader = pnet(obj, 'read', header_size, 'byte', 'network', 'view', 'noblock');
+                   while ~isempty(tryheader)
+                       hdr = ReadHeader(obj); 
+                       switch hdr.type
+                           case 1       
+                               props = ReadStartMessage(obj, hdr);
+                               lastBlock = -1;
+                               data1s = [];
+                           case 4       
+                               [datahdr, data, markers] = ReadDataMessage(obj, hdr, props);
+                               if lastBlock ~= -1 && datahdr.block > lastBlock + 1
+                                   disp(['******* Overflow with ' int2str(datahdr.block - lastBlock) ' blocks ******']);
+                               end
+                               lastBlock = datahdr.block;
+                               if datahdr.markerCount > 0
+                                   for m = 1:datahdr.markerCount
+                                disp(markers(m));
+                                   end
+                               end
+                               EEGData = reshape(data, props.channelCount, length(data) / props.channelCount);
+                               for k = 1:props.channelCount
+                                   EEGData (k,:) = EEGData (k,:) * props.resolutions (k);
+                               end  
+                               data1s = [data1s EEGData];
+                               dims = size(data1s);
+                               if dims(2) > tWs
+                                   data1s = data1s(:,  dims(2)-(tWs-1) : dims(2));
+                                   current_data=zeros(tWs,props.channelCount);
+                                   current_data=double(data1s');
+                                   cData=current_data(:,1:nCh);
+%                                    disp(['window acquired']); 
+                                   data1s = [];
+                                   finish = true;
+                               end
+                           case 3       
+                               disp('Stop');
+                               data = pnet(obj, 'read', hdr.size - header_size);
+                               finish = true;
+                           otherwise
+                               data = pnet(obj, 'read', hdr.size - header_size);
+                       end
+                       tryheader = pnet(obj, 'read', header_size, 'byte', 'network', 'view', 'noblock');
+                   end
+               catch
+                   er = lasterror;
+                   disp(er.message);
+               end
+           end
+           pnet('closeall');
+%            disp('connection closed');
+       end
    
     catch exception
        error = 1;
@@ -116,3 +180,113 @@ function [cData, error] = Acquire_tWs(deviceName, obj, nCh, tWs)
     warning(s);
    
 end
+
+%% ***********************************************************************
+% Read the message header
+function hdr = ReadHeader(con)
+    % con    tcpip connection object
+    
+    % define a struct for the header
+    hdr = struct('uid',[],'size',[],'type',[]);
+
+    % read id, size and type of the message
+    % swapbytes is important for correct byte order of MATLAB variables
+    % pnet behaves somehow strange with byte order option
+    hdr.uid = pnet(con,'read', 16);
+    hdr.size = swapbytes(pnet(con,'read', 1, 'uint32', 'network'));
+    hdr.type = swapbytes(pnet(con,'read', 1, 'uint32', 'network'));
+end
+
+%% ***********************************************************************   
+% Read the start message
+function props = ReadStartMessage(con, hdr)
+    % con    tcpip connection object    
+    % hdr    message header
+    % props  returned eeg properties
+
+    % define a struct for the EEG properties
+    props = struct('channelCount',[],'samplingInterval',[],'resolutions',[],'channelNames',[]);
+    % read EEG properties
+    props.channelCount = swapbytes(pnet(con,'read', 1, 'uint32', 'network'));
+    props.samplingInterval = swapbytes(pnet(con,'read', 1, 'double', 'network'));
+    props.resolutions = swapbytes(pnet(con,'read', props.channelCount, 'double', 'network'));
+    allChannelNames = pnet(con,'read', hdr.size - 36 - props.channelCount * 8);
+    props.channelNames = SplitChannelNames(allChannelNames);
+end
+    
+%% ***********************************************************************   
+% Read a data message
+function [datahdr, data, markers] = ReadDataMessage(con, hdr, props)
+    % con       tcpip connection object    
+    % hdr       message header
+    % props     eeg properties
+    % datahdr   data header with information on datalength and number of markers
+    % data      data as one dimensional arry
+    % markers   markers as array of marker structs
+    
+    % Define data header struct and read data header
+    datahdr = struct('block',[],'points',[],'markerCount',[]);
+
+    datahdr.block = swapbytes(pnet(con,'read', 1, 'uint32', 'network'));
+    datahdr.points = swapbytes(pnet(con,'read', 1, 'uint32', 'network'));
+    datahdr.markerCount = swapbytes(pnet(con,'read', 1, 'uint32', 'network'));
+
+    % Read data in float format
+    data = swapbytes(pnet(con,'read', props.channelCount * datahdr.points, 'single', 'network'));
+
+
+    % Define markers struct and read markers
+    markers = struct('size',[],'position',[],'points',[],'channel',[],'type',[],'description',[]);
+    for m = 1:datahdr.markerCount
+        marker = struct('size',[],'position',[],'points',[],'channel',[],'type',[],'description',[]);
+
+        % Read integer information of markers
+        marker.size = swapbytes(pnet(con,'read', 1, 'uint32', 'network'));
+        marker.position = swapbytes(pnet(con,'read', 1, 'uint32', 'network'));
+        marker.points = swapbytes(pnet(con,'read', 1, 'uint32', 'network'));
+        marker.channel = swapbytes(pnet(con,'read', 1, 'int32', 'network'));
+
+        % type and description of markers are zero-terminated char arrays
+        % of unknown length
+        c = pnet(con,'read', 1);
+        while c ~= 0
+            marker.type = [marker.type c];
+            c = pnet(con,'read', 1);
+        end
+
+        c = pnet(con,'read', 1);
+        while c ~= 0
+            marker.description = [marker.description c];
+            c = pnet(con,'read', 1);
+        end
+        
+        % Add marker to array
+        markers(m) = marker;  
+    end
+
+end 
+%% ***********************************************************************   
+% Helper function for channel name splitting, used by function
+% ReadStartMessage for extraction of channel names
+ function channelNames = SplitChannelNames(allChannelNames)
+    % allChannelNames   all channel names together in an array of char
+    % channelNames      channel names splitted in a cell array of strings
+
+    % cell array to return
+    channelNames = {};
+    
+    % helper for actual name in loop
+    name = [];
+    
+    % loop over all chars in array
+    for i = 1:length(allChannelNames)
+        if allChannelNames(i) ~= 0
+            % if not a terminating zero, add char to actual name
+            name = [name allChannelNames(i)];
+        else
+            % add name to cell array and clear helper for reading next name
+            channelNames = [channelNames {name}];
+            name = [];
+        end
+    end
+ end

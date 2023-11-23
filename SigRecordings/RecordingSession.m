@@ -82,9 +82,8 @@
                             % when acquiring data using the RHA2132 for
                             % the buffered acquisition mode to work well.
 % 2018-07-09 / Andreas Eiler / Added function to change current folder to load
-                            % Myo.dll file correctly
-                            
-% 20xx-xx-xx / Author  / Comment
+                            % Myo.dll file correctly                           
+
 
 
 
@@ -536,6 +535,7 @@ while ex <= nM
         else
             % Save and go ahead with the next movement..
             recSessionData(:,:,ex) = allData(:,:);
+            
             % Increase loop index
             ex = ex + 1;
         end

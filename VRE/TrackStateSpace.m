@@ -87,8 +87,7 @@ if ischar(varargin{1})
         newTarget = movement.*distance;
         ssTargets = [ssTargets, {newTarget}]; % Save the new target
         
-        newTrajectory = zeros(1,size(newTarget,2));
-        ssTrajectories = [ssTrajectories; {newTrajectory}];   % Create new position
+        ssTrajectories = [ssTrajectories; {[0, 0, 0]}];   % Create new position
         
     elseif strcmpi(varargin{1},'move')
         
@@ -133,9 +132,9 @@ if ischar(varargin{1})
         ssTrajectory = ssTrajectories{end};
         ssTarget = ssTargets{end};
         
-        ssOrigin = zeros(1,size(ssTrajectory,2));
+        
         userPath = CalculatePathLength(ssTrajectory, ssTarget, allowance);
-        perfectPath = CalculatePathLength([ssOrigin; ssTarget], ssTarget, allowance);
+        perfectPath = CalculatePathLength([0 0 0; ssTarget], ssTarget, allowance);
         
         %Will round the value to nearest value with accuracy of 3-decimal
         %places.

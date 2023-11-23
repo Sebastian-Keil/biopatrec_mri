@@ -118,7 +118,7 @@ function pb_treat_Callback(hObject, eventdata, handles)
     method.OverlappedC = get(handles.cb_overlappedc,'Value');
     method.OverlappedR = get(handles.cb_overlappedr,'Value');
     
-    treated_data = treat_Data(phandles, rawdata, Fs, Nr, Tc*Psr, tw, nw, trN, vN, tN, filters, method);           % Treat Data
+    treated_data = TreatData(phandles, rawdata, Fs, Nr, Tc*Psr, tw, nw, trN, vN, tN, filters, method);           % Treat Data
     treated_data.msg = get(phandles.lb_msg,'String');
     set(phandles.t_treated_data,'UserData',treated_data);    
     set(phandles.et_trN,'String',num2str(treated_data.trN));    
@@ -414,7 +414,7 @@ function pb_treatFolder_Callback(hObject, eventdata, handles)
             load([lpath num2str(rn) '.mat']);
             set(handles.t_msg,'String',['Treating file no:' num2str(rn)]);
             rawdata = ss.trdata;
-            treated_data = treat_Data(phandles, rawdata, Fs, Nr, Tc*Psr, tw, nw, trN, vN, tN, filters, method);           % Treat Data
+            treated_data = TreatData(phandles, rawdata, Fs, Nr, Tc*Psr, tw, nw, trN, vN, tN, filters, method);           % Treat Data
             treated_data.msg = get(phandles.lb_msg,'String');
             save([spath '\' num2str(rn) 't.mat'],'treated_data');
         else
