@@ -406,7 +406,7 @@ while ex <= nM
         
         % Connect the chosen device, it returns the connection object
         obj = ConnectDevice(handles);
-        
+       
         % Set the selected device and Start the acquisition
         SetDeviceStartAcquisition(handles, obj);
         
@@ -415,7 +415,12 @@ while ex <= nM
             rep
             handles.rep = rep;
             handles.contraction = 1;                                   % 1 means contraction, 0 means relaxation
-            samplesCounter = 1;                                        % variable used to track the progressing time of the recording session
+            samplesCounter = 1;    
+            % Send Trigger
+            h = actxserver('WScript.Shell'); %Initializes server for GUI control
+                        h.AppActivate('recorder'); %Brings brainvision to focus
+                        h.SendKeys('1'); % Sends '1' keystroke
+        % variable used to track the progressing time of the recording session
             UpdateGUI = 1;
             cData = zeros(tWs, nCh);
             
