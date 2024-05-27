@@ -1,14 +1,14 @@
 % ---------------------------- Copyright Notice ---------------------------
-% This file is part of BioPatRec © which is open and free software under 
+% This file is part of BioPatRec Â© which is open and free software under 
 % the GNU Lesser General Public License (LGPL). See the file "LICENSE" for 
 % the full license governing this code and copyrights.
 %
 % BioPatRec was initially developed by Max J. Ortiz C. at Integrum AB and 
-% Chalmers University of Technology. All authors’ contributions must be kept
+% Chalmers University of Technology. All authorsâ€™ contributions must be kept
 % acknowledged below in the section "Updates % Contributors". 
 %
 % Would you like to contribute to science and sum efforts to improve 
-% amputees’ quality of life? Join this project! or, send your comments to:
+% amputeesâ€™ quality of life? Join this project! or, send your comments to:
 % maxo@chalmers.se.
 %
 % The entire copyright notice must be kept in this or any source file 
@@ -283,7 +283,11 @@ for t = 1 : trials
 
                 % Connect the chosen device, it returns the connection object
                 obj = ConnectDevice(handles);
-
+            	% Send Trigger
+          		h = actxserver('WScript.Shell'); %Initializes server for GUI control
+                        h.AppActivate('recorder'); %Brings brainvision to focus
+                        h.SendKeys('1'); % Sends '1' keystroke
+			
                 % Set the selected device and Start the acquisition
                 SetDeviceStartAcquisition(handles, obj);
 
@@ -307,7 +311,11 @@ for t = 1 : trials
             if trainUsingVre
                 ResetVRE(handles.vre_Com,1,1);
             end
-            
+            % STOP TRIGGER
+                        h = actxserver('WScript.Shell');
+                        h.AppActivate('recorder'); %Brings brainvision to focus
+                        h.SendKeys('3'); % Sends 3 keystroke
+			
             %% Save data
             test.mov                    = mov;
             test.nTW                    = nTW-1;
