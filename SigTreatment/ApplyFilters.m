@@ -1,14 +1,14 @@
 % ---------------------------- Copyright Notice ---------------------------
-% This file is part of BioPatRec © which is open and free software under 
+% This file is part of BioPatRec Â© which is open and free software under 
 % the GNU Lesser General Public License (LGPL). See the file "LICENSE" for 
 % the full license governing this code and copyrights.
 %
 % BioPatRec was initially developed by Max J. Ortiz C. at Integrum AB and 
-% Chalmers University of Technology. All authors’ contributions must be kept
+% Chalmers University of Technology. All authorsâ€™ contributions must be kept
 % acknowledged below in the section "Updates % Contributors". 
 %
 % Would you like to contribute to science and sum efforts to improve 
-% amputees’ quality of life? Join this project! or, send your comments to:
+% amputeesâ€™ quality of life? Join this project! or, send your comments to:
 % maxo@chalmers.se.
 %
 % The entire copyright notice must be kept in this or any source file 
@@ -62,6 +62,8 @@ function data = ApplyFilters(sigTreated, data)
     elseif strcmp(sigTreated.fFilter, 'ButterMRI')
         data = FilterEMG(sF, data, 8 ,80 ,min(400,sF/2-1));
         data = BSbutterMRHarmonics(sF, data);
+    elseif strcmp(sigTreated.fFilter, 'Comb Filter')
+    	data = Comb_Filt(sF, data);
     end
     
 %    disp('Frequency Filtering Done');
