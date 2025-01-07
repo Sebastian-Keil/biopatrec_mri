@@ -1,2 +1,8 @@
 
 cdata.mat
+EMG_Filt.mat
+EMG_Noisy_before.mat
+t5_train.mat
+bandpass.mat
+data.mat
+Debug.mat

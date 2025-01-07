@@ -62,8 +62,8 @@ function data = ApplyFilters(sigTreated, data)
     elseif strcmp(sigTreated.fFilter, 'ButterMRI')
         data = FilterEMG(sF, data, 8 ,80 ,min(400,sF/2-1));
         data = BSbutterMRHarmonics(sF, data);
-    elseif strcmp(sigTreated.fFilter, 'Comb Filter')
-    	data = Comb_Filt(sF, data);
+    elseif strcmp(sigTreated.fFilter, 'CombFilter')
+    	data = CombFilt(sF, data);
     end
     
 %    disp('Frequency Filtering Done');
