@@ -1,19 +1,19 @@
 function [data] = CombFilt(Fs, data)
 save('data.mat', 'data')
 % Input parameters
-TA = 0.8; % Slice acquisition time (seconds)
+TA = 2; % Slice acquisition time (seconds)
 
 % Calculate P for comb filtering
 P = TA / Fs;
 
 % Create bandpass filter
 [b,a] = butter(4, [20 250]/(Fs/2), 'bandpass');
-save("bandpass.mat", "b", "a")
+save("bandpass.mat", "b", "a");
 
 % Apply bandpass filter
 EMG_noisy = filtfilt(b,a,data);
 
-save("EMG_Noisy_before.mat", "EMG_noisy")
+save("EMG_Noisy_before.mat", "EMG_noisy");
 
 % Optional: Add bandstop filter at 50 Hz if needed
 [b,a] = butter(4, [45 55]/(Fs/2), 'stop');
@@ -28,10 +28,11 @@ for i = 1:length(data)
 end
 
 save("EMG_Filt.mat","EMG_filt");
-save("Debug.mat");
+
 % Apply filter
 Denom = [0 0];
 data = filter(EMG_filt, EMG_filt, data);
-
+data(100:150,:) = zeros(size(data(100:150,:)));
+save("\\zisvfs12\home\Sebastian.Keil\Documents\GitHub\biopatrec_mri\Debug.mat");
 
 end

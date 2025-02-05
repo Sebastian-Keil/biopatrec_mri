@@ -44,5 +44,6 @@ for F = 80 : fPl : Fmax
     [sos_var,g] = zp2sos(z, p, k);
     Hd          = dfilt.df2sos(sos_var, g);
     data = filter(Hd,data);
+save("butterdata.mat", "data")    
 end
 
