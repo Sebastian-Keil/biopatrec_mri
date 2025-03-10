@@ -26,7 +26,7 @@
 function [trData, vData, tData] = ApplyFiltersEpochs(sigTreated, trData, vData, tData)
 
   dataAll = cat(4,trData, vData, tData);
-  
+  save("WHOLEDATA")
     for iNb = 1:size(dataAll,4)
         for iMov = 1:sigTreated.nM
             dataAll(:,:,iMov,iNb) = ApplyFilters(sigTreated,dataAll(:,:,iMov,iNb));

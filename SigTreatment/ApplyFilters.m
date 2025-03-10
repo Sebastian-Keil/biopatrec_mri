@@ -34,9 +34,9 @@ function data = ApplyFilters(sigTreated, data)
 
     %% Frequency filters
     sF = sigTreated.sF;
-    
+
 %   disp('Frequency filtering data...');
-    
+
     if strcmp(sigTreated.fFilter,'None')
         % Do nothing and exit if
     elseif strcmp(sigTreated.fFilter,'50Hz Notch')
@@ -63,14 +63,14 @@ function data = ApplyFilters(sigTreated, data)
         data = FilterEMG(sF, data, 8 ,80 ,min(400,sF/2-1));
         data = BSbutterMRHarmonics(sF, data);
     elseif strcmp(sigTreated.fFilter, 'CombFilter')
-    	data = CombFilt(sF, data);
+    	data = CombFilter(sF, data);
     end
-    
+
 %    disp('Frequency Filtering Done');
-    
+
     %% Spatial filters
 %    disp('Spatial filtering data...');
-    
+
     if strcmp(sigTreated.sFilter,'None')
         % Do nothing and exit if
     elseif strcmp(sigTreated.sFilter,'SDF')
@@ -81,8 +81,8 @@ function data = ApplyFilters(sigTreated, data)
         data = SpatialFilterDDFAbs(data);
         disp('Warning: Signals have been converted to their absulute value');
     end
-    
+
 %    disp('Spatial Filtering Done');
-  
+
 
 end
