@@ -6,3 +6,4 @@ t5_train.mat
 bandpass.mat
 data.mat
 Debug.mat
+*.mat

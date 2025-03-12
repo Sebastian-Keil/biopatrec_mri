@@ -1,49 +1,27 @@
 function data = CombFilter(Fs, data)
-    % Save initial data for debugging
-    save('data.mat', 'data');
-    
     % Input parameters
     TA = 0.8; % Slice acquisition time (seconds)
     
     % Calculate P for comb filtering
     P = round(TA * Fs); % Convert to samples
-    
-    % Create bandpass filter
-    [b,a] = butter(4, [20 250]/(Fs/2), 'bandpass');
-    save("bandpass.mat", "b", "a");
+
+    % Create bandpass filter (20–250 Hz)
+    [b_bp,a_bp] = butter(4, [20 250]/(Fs/2), 'bandpass');
     
     % Apply bandpass filter
-    EMG_noisy = filtfilt(b,a,data);
-    save("EMG_Noisy_before.mat", "EMG_noisy");
+    EMG_noisy = filtfilt(b_bp, a_bp, data);
     
     % Optional: Add bandstop filter at 50 Hz if needed
-    [b,a] = butter(4, [45 55]/(Fs/2), 'stop');
-    EMG_noisy = filtfilt(b,a,EMG_noisy);
+    [b_bs, a_bs] = butter(4, [45 55]/(Fs/2), 'stop');
+    EMG_noisy = filtfilt(b_bs, a_bs, EMG_noisy);
     
-    % Apply comb filter
-    EMG_filt = zeros(size(data));
-    for i = 1:length(data)
-       delay = mod(i-1,P)+1;
-        if i >= delay
-            EMG_filt(i) = EMG_noisy(i) - EMG_noisy(delay);
-        end
-    end
-    save("EMG_Filt.mat","EMG_filt");
+    % Apply comb filter using convolution instead of loop
+    comb_filter = [1, zeros(1, P-1), -1]; % Difference equation for periodic noise removal
+    EMG_filt = filter(comb_filter, 1, EMG_noisy);
+
+    % Return filtered signal
+    data = EMG_filt;
     
-    % Apply final filter
-    Out = [EMG_filt(:,1)];
-    Denom = ones(size(Out));
-    Outout = horzcat(Out, Denom);
-    save('Out.mat', "Out");
-    
-    % Ensure proper dimensions for filter
-  %  if size(data,2) > 1
-   %     data = reshape(data, [], 1);
-    
-    
-    % Apply final filter operation
-    data = filter(Out, Denom, data);
-    
-    % Final debug save
-    save("Debug.mat")
+    % Save final result (only once)
+    save("FilteredData.mat", "data");  
 end
