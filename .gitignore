@@ -1,9 +1,4 @@
-cdata.mat
-EMG_Filt.mat
-EMG_Noisy_before.mat
-t5_train.mat
-bandpass.mat
-data.mat
-Debug.mat
 *.mat
 EMG_plot.m
+.codebuddy
+.DS_Store
